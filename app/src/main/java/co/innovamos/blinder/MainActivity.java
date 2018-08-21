@@ -26,10 +26,12 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.RingtoneManager;
 import android.net.Uri;
+import android.net.http.SslError;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.Message;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
@@ -41,10 +43,12 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.webkit.CookieManager;
 import android.webkit.DownloadListener;
 import android.webkit.GeolocationPermissions;
+import android.webkit.SslErrorHandler;
 import android.webkit.URLUtil;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -53,6 +57,7 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -80,6 +85,7 @@ public class MainActivity extends AppCompatActivity {
 
 	//Configuration variables
 	private static String ASWV_URL      = SmartWebView.ASWV_URL;
+	private static String TARGET_URL_PREFIX  = SmartWebView.TARGET_URL_PREFIX;
 	private static String ASWV_F_TYPE   = SmartWebView.ASWV_F_TYPE;
 
     public static String ASWV_HOST		= aswm_host(ASWV_URL);
@@ -102,6 +108,18 @@ public class MainActivity extends AppCompatActivity {
     private SecureRandom random = new SecureRandom();
 
     private static final String TAG = MainActivity.class.getSimpleName();
+
+
+	/**
+	 * @author Javier Misat
+	 * Variables necesarias para web view personalizado
+	 */
+	private WebView webView;
+	private WebView mWebviewPop;
+	private FrameLayout mContainer;
+	private Context mContext;
+	public static final String USER_AGENT = "Mozilla/5.0 (Linux; Android 4.1.1; Galaxy Nexus Build/JRO03C) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.166 Mobile Safari/535.19";
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
@@ -149,7 +167,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    @SuppressLint({"SetJavaScriptEnabled", "WrongViewCast"})
+    @SuppressLint({"SetJavaScriptEnabled", "WrongViewCast", "ClickableViewAccessibility"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -187,6 +205,10 @@ public class MainActivity extends AppCompatActivity {
 
         asw_view = findViewById(R.id.msw_view);
 
+        //Javier Misat - Se setea el contexto de la app
+		mContext=this.getApplicationContext();
+
+
 
 
         //Webview settings; defaults are customized for best performance
@@ -204,6 +226,14 @@ public class MainActivity extends AppCompatActivity {
 		webSettings.setAllowUniversalAccessFromFileURLs(true);
 		webSettings.setUseWideViewPort(true);
 		webSettings.setDomStorageEnabled(true);
+
+		/**
+		 * @author Javier Misat
+		 * @descripcion Setea las cookies de la ventana
+		 */
+		//Cookie manager for the webview
+		CookieManager cookieManager = CookieManager.getInstance();
+		cookieManager.setAcceptCookie(true);
 
 		/**
 		 * @author Javier Misat
@@ -238,8 +268,6 @@ public class MainActivity extends AppCompatActivity {
 			}
 		});
 
-
-
 		asw_view.setDownloadListener(new DownloadListener() {
 			@Override
 			public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimeType, long contentLength) {
@@ -270,9 +298,18 @@ public class MainActivity extends AppCompatActivity {
             asw_view.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         }
         asw_view.setVerticalScrollBarEnabled(false);
-        asw_view.setWebViewClient(new Callback());
 
-        //Rendering the default URL
+
+		/**
+		 * @author Javier misat
+		 * seteamos el web view con un web client personalizado
+		 */
+
+		asw_view.setWebViewClient(new Callback());
+		//asw_view.setWebViewClient(new MyCustomWebViewClient());
+		asw_view.setWebChromeClient(new UriWebChromeClient());
+
+		//Rendering the default URL
         aswm_view(ASWV_URL, false);
 
         asw_view.setWebChromeClient(new WebChromeClient() {
@@ -396,9 +433,20 @@ public class MainActivity extends AppCompatActivity {
         }
 
         public void onPageFinished(WebView view, String url) {
-            findViewById(R.id.msw_welcome).setVisibility(View.GONE);
+			if(url.startsWith("https://m.facebook.com/v2.7/dialog/oauth")){
+				if(mWebviewPop!=null)
+				{
+					mWebviewPop.setVisibility(View.GONE);
+					mContainer.removeView(mWebviewPop);
+					mWebviewPop=null;
+				}
+				view.loadUrl("https://blinder.com.co");
+				return;
+			}
+			findViewById(R.id.msw_welcome).setVisibility(View.GONE);
 			findViewById(R.id.msw_view).setVisibility(View.VISIBLE);
-        }
+			super.onPageFinished(view, url);
+		}
         //For android below API 23
 		@SuppressWarnings("deprecation")
 		@Override
@@ -406,6 +454,12 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(getApplicationContext(), getString(R.string.went_wrong), Toast.LENGTH_SHORT).show();
             aswm_view("file:///android_res/raw/error.html", false);
         }
+
+		@Override
+		public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
+			Log.d("onReceivedSslError", "onReceivedSslError");
+			//super.onReceivedSslError(view, handler, error);
+		}
 
         @Override
         public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
@@ -445,7 +499,7 @@ public class MainActivity extends AppCompatActivity {
 	   } else {
       		url += "?";
 	   }
-	   url += "rid="+random_id();
+	  // url += "rid="+random_id();
 	   asw_view.loadUrl(url);
         }
     }
@@ -453,9 +507,32 @@ public class MainActivity extends AppCompatActivity {
 	//Actions based on shouldOverrideUrlLoading
 	public boolean url_actions(WebView view, String url){
 		boolean a = true;
-		//Show toast error if not connected to the network
-		if (!ASWP_OFFLINE && !DetectConnection.isInternetAvailable(MainActivity.this)) {
-			Toast.makeText(getApplicationContext(), getString(R.string.check_connection), Toast.LENGTH_SHORT).show();
+		String host = Uri.parse(url).getHost();
+
+	 if( url.startsWith("http:") || url.startsWith("https:")) {
+			if(Uri.parse(url).getPath().equals("/connection-compte.html")) {
+				Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://blinder.com.co"));
+				startActivity(browserIntent);
+
+				return true ;
+			}
+
+			if (host.equals(TARGET_URL_PREFIX)) {
+				if (mWebviewPop != null) {
+					mWebviewPop.setVisibility(View.GONE);
+					mContainer.removeView(mWebviewPop);
+					mWebviewPop = null;
+				}
+				return false;
+			}
+			if (host.equals("m.facebook.com") || host.equals("www.facebook.com") || host.equals("facebook.com") || host.equals("accounts.google.com") || host.equals("google.com") || host.equals("www.google.com") ) {
+				return false;
+			}
+			// Otherwise, the link is not for a page on my site, so launch
+			// another Activity that handles URLs
+			Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+			startActivity(intent);
+			return true;
 
 			//Use this in a hyperlink to redirect back to default URL :: href="refresh:android"
 		} else if (url.startsWith("refresh:")) {
@@ -721,4 +798,116 @@ public class MainActivity extends AppCompatActivity {
         super.onRestoreInstanceState(savedInstanceState);
         asw_view.restoreState(savedInstanceState);
     }
+
+
+	/**
+	 * @author javier misat
+	 * Funciones para implementación de ventanas emergentes en app "nativamente"
+	 */
+	private class MyCustomWebViewClient extends WebViewClient {
+
+		@Override
+		public boolean shouldOverrideUrlLoading(WebView view, String url) {
+
+			String host = Uri.parse(url).getHost();
+
+			if( url.startsWith("http:") || url.startsWith("https:") ) {
+
+				if(Uri.parse(url).getPath().equals("/connection-compte.html")) {
+					Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://blinder.com.co"));
+					startActivity(browserIntent);
+
+					return true ;
+				}
+
+				if (host.equals(TARGET_URL_PREFIX)) {
+					if (mWebviewPop != null) {
+						mWebviewPop.setVisibility(View.GONE);
+						mContainer.removeView(mWebviewPop);
+						mWebviewPop = null;
+					}
+					return false;
+				}
+				if (host.equals("m.facebook.com") || host.equals("www.facebook.com") || host.equals("facebook.com") || host.equals("accounts.google.com") || host.equals("google.com") || host.equals("www.google.com") ) {
+					return false;
+				}
+				// Otherwise, the link is not for a page on my site, so launch
+				// another Activity that handles URLs
+				Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+				startActivity(intent);
+				return true;
+			}
+			// Otherwise allow the OS to handle it
+			else if (url.startsWith("tel:")) {
+				Intent tel = new Intent(Intent.ACTION_DIAL, Uri.parse(url));
+				startActivity(tel);
+				return true;
+			}
+			//This is again specific for my website
+			else if (url.startsWith("mailto:")) {
+				Intent mail = new Intent(Intent.ACTION_SEND);
+				mail.setType("application/octet-stream");
+				String AdressMail = new String(url.replace("mailto:" , "")) ;
+				mail.putExtra(Intent.EXTRA_EMAIL, new String[]{ AdressMail });
+				mail.putExtra(Intent.EXTRA_SUBJECT, "");
+				mail.putExtra(Intent.EXTRA_TEXT, "");
+				startActivity(mail);
+				return true;
+			}
+			return true;
+		}
+
+		@Override
+		public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
+			Log.d("onReceivedSslError", "onReceivedSslError");
+			//super.onReceivedSslError(view, handler, error);
+		}
+
+		@Override
+		public void onPageFinished(WebView view, String url) {
+			if(url.startsWith("https://m.facebook.com/v2.7/dialog/oauth")){
+				if(mWebviewPop!=null)
+				{
+					mWebviewPop.setVisibility(View.GONE);
+					mContainer.removeView(mWebviewPop);
+					mWebviewPop=null;
+				}
+				view.loadUrl("https://blinder.com.co");
+				return;
+			}
+			super.onPageFinished(view, url);
+		}
+	}
+
+	private class UriWebChromeClient extends WebChromeClient {
+
+		@Override
+		public boolean onCreateWindow(WebView view, boolean isDialog,
+									  boolean isUserGesture, Message resultMsg) {
+			mWebviewPop = new WebView(mContext);
+			mWebviewPop.getSettings().setUserAgentString(USER_AGENT);
+			mWebviewPop.setVerticalScrollBarEnabled(false);
+			mWebviewPop.setHorizontalScrollBarEnabled(false);
+			mWebviewPop.setWebViewClient(new MyCustomWebViewClient());
+			mWebviewPop.getSettings().setJavaScriptEnabled(true);
+			mWebviewPop.getSettings().setSavePassword(false);
+			mWebviewPop.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+					ViewGroup.LayoutParams.MATCH_PARENT));
+			mContainer.addView(mWebviewPop);
+			WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
+			transport.setWebView(mWebviewPop);
+			resultMsg.sendToTarget();
+
+			return true;
+		}
+
+		@Override
+		public void onCloseWindow(WebView window) {
+			Log.d("onCloseWindow", "called");
+		}
+
+	}
+
+
+
 }

@@ -27,6 +27,7 @@ class SmartWebView {
 	//Configuration variables
 	static String ASWV_URL          = "https://blinder.com.co"; //complete URL of your website or webpage
 	static String ASWV_F_TYPE       = "*/*";  //to upload any file type using "*/*"; check file type references for more
+	static String TARGET_URL_PREFIX = "blinder.com.co";  //to upload any file type using "*/*"; check file type references for more
 
 	//Rating system variables
 	static int ASWR_DAYS            = 2;        //after how many days of usage would you like to show the dialoge
