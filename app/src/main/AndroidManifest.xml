@@ -51,6 +51,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity
             android:name=".MainActivity"
             android:screenOrientation="portrait" > <!-- remove or alter as your apps requirement -->
@@ -63,6 +64,7 @@
                     android:pathPrefix="/mgks" /> <!-- if you want only a specific directory from your website to be opened in the app through external links -->
             </intent-filter>
         </activity>
+
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
