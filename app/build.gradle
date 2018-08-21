@@ -4,7 +4,7 @@ android {
 	compileSdkVersion 28
 	buildToolsVersion '28.0.0 rc1'
 	defaultConfig {
-		applicationId 'mgks.os.webview'
+		applicationId 'co.innovamos.blinder'
 		minSdkVersion 19
 		targetSdkVersion 28
 		versionCode 2
@@ -27,8 +27,12 @@ dependencies {
 	androidTestImplementation('com.android.support.test.espresso:espresso-core:2.2.2', {
 		exclude group: 'com.android.support', module: 'support-annotations'
 	})
+	//Animaciones con lottie
+	implementation 'com.airbnb.android:lottie:2.2.5'
+
 	//noinspection GradleCompatible
 	implementation 'com.android.support:appcompat-v7:27.1.1'
 	testImplementation 'junit:junit:4.12'
 	implementation 'com.google.android.gms:play-services:12.0.1'
+	implementation 'com.android.support.constraint:constraint-layout:1.1.2'
 }

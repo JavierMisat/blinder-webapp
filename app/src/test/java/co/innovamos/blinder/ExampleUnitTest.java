@@ -1,4 +1,4 @@
-package mgks.os.webview;
+package co.innovamos.blinder;
 
 import org.junit.Test;
 

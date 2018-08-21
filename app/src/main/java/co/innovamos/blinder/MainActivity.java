@@ -1,4 +1,4 @@
-package mgks.os.webview;
+package co.innovamos.blinder;
 
 /*
 * Android Smart WebView is an Open Source Project available on GitHub.
@@ -27,18 +27,19 @@ import android.graphics.BitmapFactory;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.webkit.CookieManager;
@@ -53,7 +54,6 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -87,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
     //Careful with these variable names if altering
     WebView asw_view;
     ProgressBar asw_progress;
-    TextView asw_loading_text;
+   // TextView asw_loading_text;
     NotificationManager asw_notification;
     Notification asw_notification_new;
 
@@ -168,7 +168,7 @@ public class MainActivity extends AppCompatActivity {
         } else {
             findViewById(R.id.msw_progress).setVisibility(View.GONE);
         }
-        asw_loading_text = findViewById(R.id.msw_loading_text);
+        //asw_loading_text = findViewById(R.id.msw_loading_text);
         Handler handler = new Handler();
 
         //Launching app rating request
@@ -187,12 +187,15 @@ public class MainActivity extends AppCompatActivity {
 
         asw_view = findViewById(R.id.msw_view);
 
+
+
         //Webview settings; defaults are customized for best performance
         WebSettings webSettings = asw_view.getSettings();
 
 		if(!ASWP_OFFLINE){
 			webSettings.setJavaScriptEnabled(ASWP_JSCRIPT);
 		}
+		webSettings.setJavaScriptCanOpenWindowsAutomatically(true);
 		webSettings.setSaveFormData(ASWP_SFORM);
 		webSettings.setSupportZoom(ASWP_ZOOM);
 		webSettings.setGeolocationEnabled(ASWP_LOCATION);
@@ -201,6 +204,41 @@ public class MainActivity extends AppCompatActivity {
 		webSettings.setAllowUniversalAccessFromFileURLs(true);
 		webSettings.setUseWideViewPort(true);
 		webSettings.setDomStorageEnabled(true);
+
+		/**
+		 * @author Javier Misat
+		 * @return void
+		 * @description Evita que el usuario haga scrool horizontalmente
+		 */
+		asw_view.setOnTouchListener(new View.OnTouchListener() {
+			float m_downX;
+			public boolean onTouch(View v, MotionEvent event) {
+
+				if (event.getPointerCount() > 1) {
+					//Multi touch detected
+					return true;
+				}
+
+				switch (event.getAction()) {
+					case MotionEvent.ACTION_DOWN: {
+						// save the x
+						m_downX = event.getX();
+						break;
+					}
+					case MotionEvent.ACTION_MOVE:
+					case MotionEvent.ACTION_CANCEL:
+					case MotionEvent.ACTION_UP: {
+						// set x so that it doesn't move
+						event.setLocation(m_downX, event.getY());
+						break;
+					}
+
+				}
+				return false;
+			}
+		});
+
+
 
 		asw_view.setDownloadListener(new DownloadListener() {
 			@Override
@@ -359,7 +397,7 @@ public class MainActivity extends AppCompatActivity {
 
         public void onPageFinished(WebView view, String url) {
             findViewById(R.id.msw_welcome).setVisibility(View.GONE);
-            findViewById(R.id.msw_view).setVisibility(View.VISIBLE);
+			findViewById(R.id.msw_view).setVisibility(View.VISIBLE);
         }
         //For android below API 23
 		@SuppressWarnings("deprecation")

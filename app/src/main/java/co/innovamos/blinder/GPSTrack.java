@@ -1,4 +1,4 @@
-package mgks.os.webview;
+package co.innovamos.blinder;
 
 import android.Manifest;
 import android.annotation.SuppressLint;

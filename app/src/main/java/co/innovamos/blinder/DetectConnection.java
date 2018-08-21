@@ -1,4 +1,4 @@
-package mgks.os.webview;
+package co.innovamos.blinder;
 
 import android.content.Context;
 import android.net.ConnectivityManager;

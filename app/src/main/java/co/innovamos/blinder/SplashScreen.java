@@ -1,4 +1,4 @@
-package mgks.os.webview;
+package co.innovamos.blinder;
 
 import android.app.Activity;
 import android.content.Intent;

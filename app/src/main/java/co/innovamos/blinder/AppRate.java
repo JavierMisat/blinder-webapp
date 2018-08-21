@@ -1,4 +1,4 @@
-package mgks.os.webview;
+package co.innovamos.blinder;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -8,13 +8,13 @@ import android.view.View;
 
 import java.util.Date;
 
-import static mgks.os.webview.DialogManager.create;
-import static mgks.os.webview.PreferenceHelper.getInstallDate;
-import static mgks.os.webview.PreferenceHelper.getIsAgreeShowDialog;
-import static mgks.os.webview.PreferenceHelper.getLaunchTimes;
-import static mgks.os.webview.PreferenceHelper.getRemindInterval;
-import static mgks.os.webview.PreferenceHelper.isFirstLaunch;
-import static mgks.os.webview.PreferenceHelper.setInstallDate;
+import static co.innovamos.blinder.DialogManager.create;
+import static co.innovamos.blinder.PreferenceHelper.getInstallDate;
+import static co.innovamos.blinder.PreferenceHelper.getIsAgreeShowDialog;
+import static co.innovamos.blinder.PreferenceHelper.getLaunchTimes;
+import static co.innovamos.blinder.PreferenceHelper.getRemindInterval;
+import static co.innovamos.blinder.PreferenceHelper.isFirstLaunch;
+import static co.innovamos.blinder.PreferenceHelper.setInstallDate;
 
 public final class AppRate {
 
