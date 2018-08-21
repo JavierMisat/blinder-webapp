@@ -3,7 +3,7 @@
 	<string name="image_view">Imagen</string>
 	<string name="loading">Cargando</string>
 	<string name="mgks_promo">Blinder</string>
-	<string name="rate_dialog_title">Rate</string>
+	<string name="rate_dialog_title">Calificanos</string>
 	<string name="rate_dialog_message">Si te gusta Blinder, ¿te importaría tomar un momento para calificarla? No llevará más de un minuto. ¡Gracias!</string>
 	<string name="rate_dialog_ok">CALIFICAR</string>
 	<string name="rate_dialog_cancel">LUEGO</string>
