@@ -22,7 +22,8 @@ class SmartWebView {
 	static boolean ASWP_ZOOM        = false;    //zoom control for webpages view
 	static boolean ASWP_SFORM       = false;    //save form cache and auto-fill information
 	static boolean ASWP_OFFLINE     = false;    //whether the loading webpages are offline or online
-	static boolean ASWP_EXTURL      = false;     //open external url with default browser instead of app webview
+	static boolean ASWP_EXTURL      = true;     //open external url with default browser instead of app webview
+	static String URL_PREFIX      = "blinder.com.co";;     // Prefijo de pagina web
 
 	//Configuration variables
 	static String ASWV_URL          = "https://blinder.com.co"; //complete URL of your website or webpage
